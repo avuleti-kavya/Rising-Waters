@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rising Waters – Flood Prediction</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0d1b2a; color: #e0e0e0; min-height: 100vh; }
+
+    header {
+      background: linear-gradient(135deg, #1a3a5c, #0d6efd);
+      padding: 28px 40px;
+      text-align: center;
+    }
+    header h1 { font-size: 2rem; color: #fff; letter-spacing: 1px; }
+    header p  { color: #b0c8e8; margin-top: 6px; font-size: 0.95rem; }
+
+    .container { max-width: 960px; margin: 40px auto; padding: 0 20px; }
+
+    .card {
+      background: #162032;
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 32px;
+      border: 1px solid #1e3a5f;
+    }
+    .card h2 { font-size: 1.2rem; color: #5ba4f5; margin-bottom: 20px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+
+    label { display: block; font-size: 0.85rem; color: #8ab4d8; margin-bottom: 5px; }
+    input[type="number"] {
+      width: 100%; padding: 10px 14px;
+      background: #0d1b2a; border: 1px solid #1e3a5f;
+      border-radius: 8px; color: #e0e0e0; font-size: 0.95rem;
+    }
+    input[type="number"]:focus { outline: none; border-color: #0d6efd; }
+
+    button[type="submit"] {
+      margin-top: 24px; width: 100%; padding: 13px;
+      background: #0d6efd; color: #fff; border: none;
+      border-radius: 8px; font-size: 1rem; cursor: pointer;
+      transition: background 0.2s;
+    }
+    button[type="submit"]:hover { background: #0b5ed7; }
+
+    .result-box {
+      border-radius: 10px; padding: 22px 28px; text-align: center;
+      margin-bottom: 32px;
+    }
+    .result-box.high { background: #3b1010; border: 1px solid #c0392b; }
+    .result-box.low  { background: #0d2b1a; border: 1px solid #27ae60; }
+    .result-box h2   { font-size: 1.6rem; margin-bottom: 8px; }
+    .result-box.high h2 { color: #e74c3c; }
+    .result-box.low  h2 { color: #2ecc71; }
+    .result-box p    { color: #aaa; font-size: 0.95rem; }
+
+    .error-box {
+      background: #2c1010; border: 1px solid #c0392b;
+      border-radius: 10px; padding: 16px 22px; color: #e74c3c;
+      margin-bottom: 24px;
+    }
+
+    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 600px) { .charts { grid-template-columns: 1fr; } }
+    .charts img { width: 100%; border-radius: 10px; border: 1px solid #1e3a5f; }
+    .chart-single img { width: 100%; border-radius: 10px; border: 1px solid #1e3a5f; }
+
+    footer { text-align: center; padding: 24px; color: #4a6a8a; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🌊 Rising Waters</h1>
+  <p>ML-Powered Flood Prediction System</p>
+</header>
+
+<div class="container">
+
+  {% if error %}
+  <div class="error-box">⚠ {{ error }}</div>
+  {% endif %}
+
+  {% if result %}
+  <div class="result-box {{ 'high' if result.prediction == 1 else 'low' }}">
+    <h2>{{ result.label }}</h2>
+    <p>Flood Probability: <strong>{{ result.probability }}</strong></p>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Enter Meteorological Data</h2>
+    <form action="/predict" method="POST">
+      <div class="grid">
+        <div>
+          <label>Annual Rainfall (mm)</label>
+          <input type="number" name="annual_rainfall" step="0.1" placeholder="e.g. 1800" required
+                 value="{{ request.form.annual_rainfall if request.form.annual_rainfall }}"/>
+        </div>
+        <div>
+          <label>Cloud Visibility (km)</label>
+          <input type="number" name="cloud_visibility" step="0.1" placeholder="e.g. 4.5" required
+                 value="{{ request.form.cloud_visibility if request.form.cloud_visibility }}"/>
+        </div>
+        <div>
+          <label>Monsoon Rainfall (mm)</label>
+          <input type="number" name="monsoon_rainfall" step="0.1" placeholder="e.g. 1100" required
+                 value="{{ request.form.monsoon_rainfall if request.form.monsoon_rainfall }}"/>
+        </div>
+        <div>
+          <label>Pre-Monsoon Rainfall (mm)</label>
+          <input type="number" name="pre_monsoon_rainfall" step="0.1" placeholder="e.g. 200" required
+                 value="{{ request.form.pre_monsoon_rainfall if request.form.pre_monsoon_rainfall }}"/>
+        </div>
+        <div>
+          <label>Post-Monsoon Rainfall (mm)</label>
+          <input type="number" name="post_monsoon_rainfall" step="0.1" placeholder="e.g. 150" required
+                 value="{{ request.form.post_monsoon_rainfall if request.form.post_monsoon_rainfall }}"/>
+        </div>
+        <div>
+          <label>Winter Rainfall (mm)</label>
+          <input type="number" name="winter_rainfall" step="0.1" placeholder="e.g. 60" required
+                 value="{{ request.form.winter_rainfall if request.form.winter_rainfall }}"/>
+        </div>
+      </div>
+      <button type="submit">Predict Flood Risk</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Model Performance Charts</h2>
+    <div class="charts">
+      <img src="/static/accuracy_comparison.png" alt="Accuracy Comparison" onerror="this.style.display='none'"/>
+      <img src="/static/confusion_matrix.png" alt="Confusion Matrix" onerror="this.style.display='none'"/>
+    </div>
+    <div class="chart-single" style="margin-top:20px;">
+      <img src="/static/feature_importance.png" alt="Feature Importance" onerror="this.style.display='none'"/>
+    </div>
+  </div>
+
+</div>
+
+<footer>Rising Waters &mdash; Flood Early Warning System &copy; 2025</footer>
+
+</body>
+</html>
